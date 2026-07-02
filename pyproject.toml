@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "dill>=0.4.1",
+    "firecrawl>=4.31.0",
     "openai-agents[any-llm]>=0.17.6",
     "pexpect>=4.9.0",
 ]
