@@ -78,7 +78,7 @@ class Main():
         a.model_settings = config.settings
         a.tools = self.get_tools()
         self.state.shelf[0] = self
-        return (await Runner.run(a,inp,max_turns=96)).to_input_list()
+        return (await Runner.run(a,inp,max_turns=None)).to_input_list()
 
     def get_tools(self) -> list[Tool]:
         @function_tool
