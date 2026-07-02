@@ -6,7 +6,11 @@ def get_search():
     f = Firecrawl(api_key="KEY HERE")
 
     @function_tool
-    def search(query: str):
-        for i in list(f.search(query)):
+    def search(query: str, count: int):
+        for i in list(f.search(query, limit=count)):
             print(i)
-    return search
+
+    @function_tool
+    def read_page(url: str):
+        return f.scrape(url).markdown
+    return search, read_page
