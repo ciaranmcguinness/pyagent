@@ -7,7 +7,7 @@ def get_search():
 
     @function_tool
     def search(query: str, count: int):
-        return list(filter(lambda x: x[1] != None, f.search(query)))
+        return list(filter(lambda x: x[1] != None, f.search(query, limit=count)))
     @function_tool
     def read_page(url: str):
         return f.scrape(url).markdown
