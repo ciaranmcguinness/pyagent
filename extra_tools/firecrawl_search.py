@@ -2,8 +2,8 @@ from firecrawl import Firecrawl
 from firecrawl.types import Source
 from agents import function_tool
 
-def get_search():
-    f = Firecrawl(api_key="KEY HERE")
+def get_search(key):
+    f = Firecrawl(api_key=key)
 
     @function_tool
     def search(query: str, count: int):
