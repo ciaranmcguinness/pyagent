@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import inspect
 import asyncio
-from agents import Agent, Runner, Tool, function_tool, ModelSettings
+from agents import Agent, Runner, Tool, function_tool, ModelSettings, TResponseInputItem
 from typing import IO, Any, Optional
 from types import BuiltinFunctionType
 import config
@@ -10,6 +10,7 @@ import dill
 import importlib
 import os
 import pexpect
+import sys
 
 if config.openai_tracing != None:
     agents.set_tracing_export_api_key(config.openai_tracing)
@@ -26,10 +27,12 @@ class AgentState():
     current: Any
     shelf: dict[int, Any]
     agent: Agent
+    inp: list[TResponseInputItem]
 
 @dataclass
 class HelpfulObjects():
-    import_lib = importlib
+    import_module = importlib.import_module
+    open_file = open
 
 class Command():
     def __init__(self, running:pexpect.spawn):
@@ -68,7 +71,8 @@ class Main():
     """Main class of the agent."""
     def __init__(self, state: AgentState):
         self.state = state
-        self.objs = HelpfulObjects()
+        self.helper_objects = HelpfulObjects()
+        self.should_restart = False
 
     async def run(self, inp):
         m = config.provider.get_model(config.model)
@@ -166,8 +170,15 @@ class Main():
             """Change your system prompt to a new one."""
             self.state.agent.instructions = new_system_prompt
             return "Success!"
+        
+        @function_tool
+        def restart() -> str:
+            """Restart, useful for loading new tools."""
+            self.should_restart = True
+            return "Restart pending!"
+            
 
-        return [inspect_current, inspect_shelf, select, shelve, eval_tool, spawn_command, change_system_prompt] + config.tools
+        return [inspect_current, inspect_shelf, select, shelve, eval_tool, spawn_command, change_system_prompt, restart] + config.tools
 
 
 class Gateway():
@@ -179,7 +190,7 @@ class Gateway():
         pass
 
 if __name__ == "__main__":
-    state = AgentState(None,{},config.default_agent)
+    state = AgentState(None,{},config.default_agent, [])
     if os.path.exists("./pyagent.dill"):
         with open("./pyagent.dill","rb") as f:
             state = dill.load(f)
@@ -187,13 +198,17 @@ if __name__ == "__main__":
                 raise Exception("Invalid pyagent.dill!")
     m = Main(state)
     try:
-        inp = []
         while True:
-            inp.append({"role":"user","content":input(">")}) # type: ignore
-            inp = asyncio.run(m.run(inp))
-            print(inp[-1]["content"][0]["text"]) # type: ignore
-            
+            state.inp.append({"role":"user","content":input(">")}) # type: ignore
+            state.inp = asyncio.run(m.run(state.inp))
+            print(state.inp[-1]["content"][0]["text"]) # type: ignore
+            if m.should_restart:
+                sys.exit(89)
     except KeyboardInterrupt:
+        pass
+
+    finally:
+        print("\nSaving...")
         state.agent.tools = []
         state.agent.model = None
         state.agent.model_settings = ModelSettings()
