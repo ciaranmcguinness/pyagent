@@ -8,5 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+#pyagent specific
 config.py
 pyagent.dill
+custom_tools/
