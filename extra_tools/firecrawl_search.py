@@ -1,14 +1,15 @@
 from firecrawl import Firecrawl
 from firecrawl.types import Source
-from agents import function_tool
+from agents import function_tool, Tool
 
-def get_search(key):
+def get_search(key) -> list[Tool]:
     f = Firecrawl(api_key=key)
 
     @function_tool
     def search(query: str, count: int):
         return list(filter(lambda x: x[1] != None, f.search(query, limit=count)))
+    
     @function_tool
     def read_page(url: str):
         return f.scrape(url).markdown
-    return search, read_page
+    return [search, read_page]

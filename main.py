@@ -71,7 +71,6 @@ class Main():
         self.objs = HelpfulObjects()
 
     async def run(self, inp):
-        #await self.step()
         m = config.provider.get_model(config.model)
         a = state.agent
         a.model = m
@@ -162,7 +161,22 @@ class Main():
             except Exception as e:
                 return f"Error: {str(e)}"
 
-        return [inspect_current, inspect_shelf, select, shelve, eval_tool, spawn_command] + config.tools
+        @function_tool
+        def change_system_prompt(new_system_prompt: str) -> str:
+            """Change your system prompt to a new one."""
+            self.state.agent.instructions = new_system_prompt
+            return "Success!"
+
+        return [inspect_current, inspect_shelf, select, shelve, eval_tool, spawn_command, change_system_prompt] + config.tools
+
+
+class Gateway():
+    def __init__(self, m: Main):
+        self.m = m
+        self.messages = []
+
+    def run(self, msg):
+        pass
 
 if __name__ == "__main__":
     state = AgentState(None,{},config.default_agent)
